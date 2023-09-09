@@ -81,6 +81,36 @@ export default function SVreq(loc, settings) {
 				}
 			}
 
+            if (settings.addTags) {
+				if(settings.addYear){
+					loc.extra.tags.push("Year:"+new Date(res.imageDate).getFullYear().toString());
+				}
+				if(settings.addMonth){
+					loc.extra.tags.push("Month:"+(new Date(res.imageDate).getMonth()+1).toString());
+				}
+				if(settings.addDescription){
+					let descriptionArray = res.location.description.split(",");
+					switch(descriptionArray.length){
+						case 1:
+							loc.extra.tags.push("Prefecture:"+descriptionArray[0].trim());
+						break;
+						case 2:
+							if(descriptionArray[0].match(/[市|区|町|村]/) != null){
+								loc.extra.tags.push("Municipality:"+descriptionArray[0].trim());
+							}else{
+								loc.extra.tags.push("Road:"+descriptionArray[0].trim());
+							}
+							loc.extra.tags.push("Prefecture:"+descriptionArray[1].trim());
+						break;
+						case 3:
+							loc.extra.tags.push("Road:"+descriptionArray[0].trim());
+							loc.extra.tags.push("Municipality:"+descriptionArray[1].trim());
+							loc.extra.tags.push("Prefecture:"+descriptionArray[2].trim());
+						break;
+					}
+				}
+			}
+
             if (settings.getLatestPano) {
                 loc.panoId = res.time[res.time.length - 1].pano;
             }

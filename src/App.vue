@@ -109,6 +109,18 @@
 					<hr />
 				</div>	
 
+				<Checkbox v-model:checked="settings.addTags" label="Add tags" />
+				<hr />
+
+				<div v-if="settings.addTags">
+					<Checkbox v-model:checked="settings.addYear" label="Add year tag" />
+					<hr />
+					<Checkbox v-model:checked="settings.addMonth" label="Add month tag" />
+					<hr />
+					<Checkbox v-model:checked="settings.addDescription" label="Add description tag" />
+					<hr />
+				</div>
+
 				<h3>Filter by date</h3>
 				<div class="flex space-between">
 					<label>From</label>
@@ -292,6 +304,10 @@ const settings = reactive({
 	getLatestPano: false,
 	addPanoId: false,
 	keepExistingPanoId: false,
+	addTags: false,
+	addYear: false,
+	addMonth: false,
+	addDescription: false
 });
 
 const initialState = {
