@@ -2,13 +2,25 @@ const SV = new google.maps.StreetViewService();
 
 export default function SVreq(loc, settings) {
     return new Promise(async (resolve, reject) => {
-        let callback = (res, status) => {
+        let callback = async (res, status) => {
             if (status != google.maps.StreetViewStatus.OK) return reject({ ...loc, reason: "sv not found" });
 
             if (settings.rejectUnofficial) {
                 if (res.location.pano.length != 22) return reject({ ...loc, reason: "unofficial coverage" });
                 if (settings.rejectNoDescription && !res.location.description && !res.location.shortDescription)
                     return reject({ ...loc, reason: "no description" });
+                if (settings.rejectNoIntersection){
+					if(settings.checkLinkedPanos){
+						let newRes = await searchIntersection(res, 0, 0, settings.numOfLinkedPanos);
+						if(newRes == null) return reject({ ...loc, reason: "no intersection" });
+						res = newRes;
+					}else{
+						if (res.links.length < 3) return reject({ ...loc, reason: "no intersection" });
+					}
+				}
+			}
+			if (settings.rejectGen1 && res.tiles.worldSize.height === 1664) {
+				return reject({ ...loc, reason: "blurry gen 1" });
             }
 
             if (settings.rejectGen1 && res.tiles.worldSize.height === 1664) {
@@ -90,3 +102,36 @@ const getNearestHeading = (bs, a) => {
 };
 
 const randomInRange = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+const searchIntersection = async (res, heading, depth, maxdepth) => {
+	if (depth > maxdepth) return null;
+	if (res.links.length >= 3) return res;
+	if (depth == 0){
+		for (var i=0; i<res.links.length; i++){
+			let newRes = await SV.getPanoramaById(res.links[i].pano, () => {} );
+			let intersection = await searchIntersection(newRes.data, res.links[i].heading, depth+1, maxdepth);
+			if(intersection != null) return intersection;
+		}
+	}else{
+		//先程まで進んだ1つのみを選択
+		let index = await moveToHeading(res, heading)
+		let target = res.links[index]
+		let newRes = await SV.getPanoramaById(target.pano, () => {} );
+		let intersection = await searchIntersection(newRes.data, target.heading, depth+1, maxdepth);
+		if(intersection != null) return intersection;
+	}
+	return null;
+}
+
+const moveToHeading = async (res, heading) => {
+	let val = 360;
+	let target = 0;
+	res.links.forEach(function (element, index) {
+		let ans = Math.abs(heading - element.heading);
+		if (val > ans) {
+			val = ans;
+			target = index;
+		}
+	});
+	return target;
+}

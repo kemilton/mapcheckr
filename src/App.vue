@@ -40,6 +40,20 @@
 				<Checkbox v-model:checked="settings.rejectGen1" label="Reject gen 1 coverage" />
 				<hr />
 
+				<div v-if="settings.rejectUnofficial">
+					<Checkbox v-model:checked="settings.rejectNoIntersection" label="Get intersection locations" />
+					<hr />
+				</div>	
+
+				<div v-if="settings.rejectNoIntersection">
+					<Checkbox v-model:checked="settings.checkLinkedPanos" label="Check linked panos" />
+					<label v-if="settings.checkLinkedPanos" class="flex-center wrap indent">
+					<input type="range" v-model.number="settings.numOfLinkedPanos" min="1" max="10" />
+					({{ settings.numOfLinkedPanos }})
+					</label>
+					<hr />
+				</div>	
+
 				<Checkbox v-model:checked="settings.fixMisplaced" label="Fix misplaced locations"
 					optText="Some of your locations might slightly change" />
 				<hr />
@@ -119,6 +133,9 @@
 					<Badge changeClass :number="state.noDescription" /> no description (potential trekker)
 				</p>
 				<p>
+					<Badge changeClass :number="state.noIntersection" /> no intersection
+				</p>
+				<p>
 					<Badge changeClass :number="state.gen1" /> gen 1
 				</p>
 				<p>
@@ -184,6 +201,15 @@
 						<ExportToCSV :customMap="customMap" :data="rejectedLocs.noDescription" isRejected />
 					</div>
 				</div>
+				<div v-if="rejectedLocs.noIntersection.length" class="flex-center wrap space-between">
+					<h3 class="danger"> - {{ rejectedLocs.noIntersection.length }} no intersection ({{
+						((rejectedLocs.noIntersection.length / customMap.nbLocs) * 100).toFixed(2) }}%)</h3>
+					<div class="flex-center wrap gap">
+						<CopyToClipboard :customMap="customMap" :data="rejectedLocs.noIntersection" />
+						<ExportToJSON :customMap="customMap" :data="rejectedLocs.noIntersection" isRejected />
+						<ExportToCSV :customMap="customMap" :data="rejectedLocs.noIntersection" isRejected />
+					</div>
+				</div>
 				<div v-if="rejectedLocs.gen1.length" class="flex-center wrap space-between">
 					<h3 class="danger"> - {{ rejectedLocs.gen1.length }} gen 1 ({{
 						((rejectedLocs.gen1.length / customMap.nbLocs) * 100).toFixed(2) }}%)</h3>
@@ -240,6 +266,9 @@ const settings = reactive({
 	radius: 50,
 	rejectUnofficial: true,
 	rejectNoDescription: false,
+	rejectNoIntersection: false,
+	checkLinkedPanos: false,
+	numOfLinkedPanos: 2,
 	rejectGen1: true,
 	fixMisplaced: false,
 	setHeading: true,
@@ -264,6 +293,7 @@ const initialState = {
 	notFound: 0,
 	unofficial: 0,
 	noDescription: 0,
+	noIntersection: 0,
 	gen1: 0,
 	outOfDate: 0,
 	brokenLinks: 0,
@@ -276,7 +306,7 @@ const customMap = ref({});
 
 let mapToCheck = [];
 let resolvedLocs = [];
-let rejectedLocs = { SVNotFound: [], unofficial: [], noDescription: [], gen1: [], outOfDate: [], brokenLinks: [], };
+let rejectedLocs = { SVNotFound: [], unofficial: [], noDescription: [], noIntersection: [], gen1: [], outOfDate: [], brokenLinks: [], };
 let allRejectedLocs = [];
 
 const resetState = () => {
@@ -284,7 +314,7 @@ const resetState = () => {
 	customMap.value = {};
 	mapToCheck.length = 0;
 	resolvedLocs.length = 0;
-	rejectedLocs = { SVNotFound: [], unofficial: [], noDescription: [], gen1: [], outOfDate: [], brokenLinks: [], };
+	rejectedLocs = { SVNotFound: [], unofficial: [], noDescription: [], noIntersection: [], gen1: [], outOfDate: [], brokenLinks: [], };
 	allRejectedLocs.length = 0;
 };
 
@@ -371,6 +401,7 @@ const start = async () => {
 		...rejectedLocs.SVNotFound,
 		...rejectedLocs.unofficial,
 		...rejectedLocs.noDescription,
+		...rejectedLocs.noIntersection,
 		...rejectedLocs.gen1,
 		...rejectedLocs.outOfDate,
 		...rejectedLocs.brokenLinks
