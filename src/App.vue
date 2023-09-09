@@ -101,6 +101,14 @@
 
 				<hr />
 
+				<Checkbox v-model:checked="settings.addPanoId" label="Add PanoID" />
+				<hr />
+
+				<div v-if="settings.addPanoId">
+					<Checkbox v-model:checked="settings.keepExistingPanoId" label="Keep existing PanoID" />
+					<hr />
+				</div>	
+
 				<h3>Filter by date</h3>
 				<div class="flex space-between">
 					<label>From</label>
@@ -281,7 +289,9 @@ const settings = reactive({
 	toDate: dateToday,
 	removeNearby: false,
 	nearbyRadius: 10,
-	getLatestPano: false
+	getLatestPano: false,
+	addPanoId: false,
+	keepExistingPanoId: false,
 });
 
 const initialState = {

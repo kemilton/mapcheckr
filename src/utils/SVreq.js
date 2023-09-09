@@ -71,6 +71,16 @@ export default function SVreq(loc, settings) {
                 loc.lng = res.location.latLng.lng();
             }
 
+            if (settings.addPanoId) {
+				if (settings.keepExistingPanoId){
+					if (loc.panoId == null){
+						loc.panoId = res.location.pano;
+					}
+				} else {
+					loc.panoId = res.location.pano;
+				}
+			}
+
             if (settings.getLatestPano) {
                 loc.panoId = res.time[res.time.length - 1].pano;
             }
